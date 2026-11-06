@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#1d4e89">
+<title>Inzulin</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="ikona-192.png">
+<link rel="apple-touch-icon" href="ikona-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<script src="firebase-config.js"></script>
+<script src="firebase-bundle.js"></script>
+<style>
+  :root {
+    --modra: #1d4e89;
+    --modra-svetla: #e8f0fb;
+    --zelena: #1b7a3a;
+    --zelena-svetla: #e6f4ea;
+    --cervena: #b3261e;
+    --cervena-svetla: #fdecea;
+    --oranzova: #9a5b00;
+    --oranzova-svetla: #fff4e0;
+    --text: #1a1a1a;
+    --seda: #5f6368;
+    --okraj: #c9ced6;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #f6f7f9; color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; font-size: 22px; }
+  main { max-width: 560px; margin: 0 auto; padding: 16px 16px 48px; }
+  h1 { font-size: 1.4rem; margin: 4px 0 16px; color: var(--modra); text-align: center; }
+  h2 { font-size: 1.15rem; margin: 0 0 12px; }
+  .karta { background: #fff; border: 2px solid var(--okraj); border-radius: 18px; padding: 18px; margin-bottom: 18px; }
+  label { display: block; font-weight: 700; font-size: 1.1rem; margin-bottom: 8px; }
+  .napoveda { color: var(--seda); font-size: 0.85rem; font-weight: 400; }
+  .vstup-radek { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  input[type=text], input[type=number], input[type=time], select {
+    width: 100%; font-size: 2rem; padding: 12px 14px; border: 3px solid var(--okraj);
+    border-radius: 14px; background: #fff; color: var(--text); }
+  input:focus, select:focus { outline: none; border-color: var(--modra); }
+  .jednotka { font-size: 1.1rem; color: var(--seda); min-width: 76px; }
+  button { font: inherit; cursor: pointer; border: none; border-radius: 16px; }
+  .tlacitko-velke { width: 100%; padding: 22px; font-size: 1.5rem; font-weight: 800;
+    background: var(--modra); color: #fff; }
+  .tlacitko-velke:active { transform: scale(0.98); }
+  .tlacitko-zelene { background: var(--zelena); }
+  .tlacitko-svetle { width: 100%; padding: 16px; font-size: 1.1rem; font-weight: 700;
+    background: var(--modra-svetla); color: var(--modra); margin-top: 12px; }
+  .vysledek { text-align: center; }
+  .vysledek .davka { font-size: 4.2rem; font-weight: 900; line-height: 1.1; color: var(--zelena); margin: 6px 0; }
+  .vysledek .davka-popis { font-size: 1.3rem; font-weight: 700; }
+  .rozpis { text-align: left; font-size: 0.95rem; color: var(--seda); margin-top: 14px;
+    border-top: 1px solid var(--okraj); padding-top: 12px; }
+  .rozpis div { display: flex; justify-content: space-between; padding: 3px 0; }
+  .upozorneni { border-radius: 14px; padding: 14px 16px; margin: 12px 0; font-size: 1.05rem; font-weight: 700; text-align: left; }
+  .upozorneni.cervene { background: var(--cervena-svetla); color: var(--cervena); border: 3px solid var(--cervena); }
+  .upozorneni.oranzove { background: var(--oranzova-svetla); color: var(--oranzova); border: 3px solid #e0a030; }
+  .upozorneni.zelene { background: var(--zelena-svetla); color: var(--zelena); border: 3px solid var(--zelena); }
+  .upozorneni .velke { font-size: 1.4rem; display: block; margin-bottom: 6px; }
+  .skryte { display: none !important; }
+  .historie-polozka { display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid #e3e6ea; font-size: 1rem; }
+  .historie-polozka:last-child { border-bottom: none; }
+  .historie-polozka .cas { font-weight: 800; font-size: 1.1rem; }
+  .historie-polozka .detail { color: var(--seda); font-size: 0.85rem; }
+  .historie-polozka .jednotky { font-weight: 900; font-size: 1.3rem; color: var(--modra); white-space: nowrap; }
+  .smazat { background: none; color: var(--cervena); font-size: 0.85rem; padding: 6px 8px; text-decoration: underline; }
+  .aktivni { text-align: center; font-size: 1.05rem; padding: 12px; border-radius: 14px;
+    background: var(--modra-svetla); color: var(--modra); font-weight: 700; margin-bottom: 18px; }
+  .paticka { text-align: center; margin-top: 24px; }
+  .odkaz { background: none; color: var(--seda); text-decoration: underline; font-size: 0.9rem; padding: 10px; }
+  .nastaveni-radek { margin-bottom: 16px; }
+  .nastaveni-radek label { font-size: 1rem; }
+  .nastaveni-radek input, .nastaveni-radek select { font-size: 1.3rem; padding: 10px 12px; }
+  .dve-tlacitka { display: flex; gap: 10px; margin-top: 12px; }
+  .dve-tlacitka button { flex: 1; padding: 16px; font-size: 1.1rem; font-weight: 800; }
+  .ne { background: #e3e6ea; color: var(--text); }
+  .stav-slozky { border-radius: 14px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.95rem; font-weight: 700; text-align: center; }
+  .stav-slozky.ok { background: var(--zelena-svetla); color: var(--zelena); }
+  .stav-slozky.pozor { background: var(--oranzova-svetla); color: var(--oranzova); border: 3px solid #e0a030; width: 100%; font-size: 1rem; }
+  .stav-sync { display: block; width: 100%; border: none; border-radius: 12px; padding: 8px 12px; margin: -6px 0 14px;
+    font-size: 0.85rem; font-weight: 700; text-align: center; }
+  .stav-sync.ok { background: var(--zelena-svetla); color: var(--zelena); }
+  .stav-sync.offline { background: #eef0f3; color: var(--seda); }
+  .stav-sync.pozor { background: var(--oranzova-svetla); color: var(--oranzova); border: 2px solid #e0a030; }
+  .stav-sync.chyba { background: var(--cervena-svetla); color: var(--cervena); border: 2px solid var(--cervena); }
+  .info-maly { font-size: 0.8rem; color: var(--seda); text-align: center; margin-top: 10px; line-height: 1.4; }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- ============ HLAVNÍ OBRAZOVKA ============ -->
+  <section id="obrazovka-vypocet">
+    <h1>💉 Výpočet inzulinu</h1>
+    <button id="stav-sync" class="stav-sync skryte"></button>
+    <div id="nenastaveno" class="upozorneni oranzove skryte"><span class="velke">Aplikace ještě není nastavená</span>
+      Požádejte rodinu, aby v ⚙ Nastavení zadala parametry léčby od lékaře.</div>
+
+    <div id="stav-slozky-ok" class="stav-slozky ok skryte">📁 Deník se ukládá do složky</div>
+    <button id="stav-slozky-pozor" class="stav-slozky pozor skryte"></button>
+
+    <div id="aktivni-inzulin" class="aktivni skryte"></div>
+
+    <div class="karta">
+      <label for="cukr">1. Cukr teď <span class="napoveda">(ze senzoru)</span></label>
+      <div class="vstup-radek">
+        <input id="cukr" type="text" inputmode="decimal" autocomplete="off" placeholder="např. 7,5">
+        <span class="jednotka">mmol/l</span>
+      </div>
+
+      <label for="sacharidy">2. Jídlo – sacharidy <span class="napoveda">(nejíte-li, nechte prázdné)</span></label>
+      <div class="vstup-radek">
+        <input id="sacharidy" type="text" inputmode="numeric" autocomplete="off" placeholder="např. 45">
+        <span class="jednotka">gramů</span>
+      </div>
+
+      <button id="tl-spocitat" class="tlacitko-velke">SPOČÍTAT</button>
+      <div id="chyba-vstupu" class="upozorneni cervene skryte"></div>
+    </div>
+
+    <div id="karta-vysledek" class="karta vysledek skryte">
+      <div id="vysledek-upozorneni"></div>
+      <div id="vysledek-davka-blok">
+        <div class="davka-popis">Píchněte si:</div>
+        <div class="davka" id="vysledek-davka">0</div>
+        <div class="davka-popis" id="vysledek-jednotky-text">jednotek Fiasp</div>
+      </div>
+      <button id="tl-zapsat" class="tlacitko-velke tlacitko-zelene" style="margin-top:16px">✔ PÍCHL/A JSEM SI TO</button>
+      <button id="tl-jina-davka" class="tlacitko-svetle">Píchl/a jsem si jiné množství</button>
+      <div class="rozpis" id="vysledek-rozpis"></div>
+    </div>
+
+    <div id="karta-potvrzeno" class="karta skryte">
+      <div class="upozorneni zelene"><span class="velke">✔ Zapsáno</span><span id="potvrzeno-text"></span></div>
+      <button id="tl-novy" class="tlacitko-velke">NOVÝ VÝPOČET</button>
+    </div>
+
+    <div class="karta">
+      <h2>Dnešní dávky</h2>
+      <div id="historie-dnes"></div>
+      <button id="tl-rucne" class="tlacitko-svetle">+ Zapsat dávku ručně</button>
+    </div>
+
+    <div class="paticka">
+      <button id="tl-nastaveni" class="odkaz">⚙ Nastavení (pro rodinu)</button>
+    </div>
+    <p class="info-maly"><b>Verze 5</b> · Pomocná kalkulačka, není to zdravotnický prostředek.<br>Při pochybnostech se řiďte pokyny lékaře.</p>
+  </section>
+
+  <!-- ============ RUČNÍ ZÁPIS / JINÁ DÁVKA ============ -->
+  <section id="obrazovka-rucne" class="skryte">
+    <h1>Zapsat dávku</h1>
+    <div class="karta">
+      <label for="rucne-jednotky">Kolik jednotek jste si píchl/a?</label>
+      <div class="vstup-radek">
+        <input id="rucne-jednotky" type="text" inputmode="decimal" autocomplete="off" placeholder="např. 4">
+        <span class="jednotka">jednotek</span>
+      </div>
+      <label for="rucne-cas">V kolik hodin? <span class="napoveda">(přednastaveno teď)</span></label>
+      <div class="vstup-radek">
+        <input id="rucne-cas" type="time" step="60">
+      </div>
+      <div class="dve-tlacitka" style="margin-top:-6px;margin-bottom:18px">
+        <button type="button" class="ne" data-posun="0">Teď</button>
+        <button type="button" class="ne" data-posun="-15">−15 min</button>
+        <button type="button" class="ne" data-posun="-60">−1 hod</button>
+      </div>
+      <div id="chyba-rucne" class="upozorneni cervene skryte"></div>
+      <div class="dve-tlacitka">
+        <button id="tl-rucne-zpet" class="ne">Zpět</button>
+        <button id="tl-rucne-ulozit" class="tlacitko-velke tlacitko-zelene" style="padding:16px;font-size:1.1rem">Uložit</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PŘIHLÁŠENÍ ============ -->
+  <section id="obrazovka-prihlaseni" class="skryte">
+    <h1>☁ Přihlášení</h1>
+    <div class="karta">
+      <p class="napoveda" style="margin-top:0">Přihlášení stačí na každém zařízení jen jednou. Pak se dávky
+        sdílejí mezi telefonem a počítačem.</p>
+      <div class="nastaveni-radek"><label for="login-email">E-mail</label>
+        <input id="login-email" type="text" inputmode="email" autocomplete="username" autocapitalize="off"></div>
+      <div class="nastaveni-radek"><label for="login-heslo">Heslo</label>
+        <input id="login-heslo" type="password" autocomplete="current-password"></div>
+      <div id="chyba-login" class="upozorneni cervene skryte"></div>
+      <button id="tl-login" class="tlacitko-velke">PŘIHLÁSIT</button>
+      <button id="tl-bez-sync" class="tlacitko-svetle">Pokračovat bez synchronizace</button>
+    </div>
+  </section>
+
+  <!-- ============ NASTAVENÍ ============ -->
+  <section id="obrazovka-pin" class="skryte">
+    <h1>⚙ Nastavení</h1>
+    <div class="karta">
+      <label for="pin">Zadejte kód pro nastavení</label>
+      <input id="pin" type="password" inputmode="numeric" autocomplete="off">
+      <div id="chyba-pin" class="upozorneni cervene skryte">Špatný kód.</div>
+      <div class="dve-tlacitka">
+        <button id="tl-pin-zpet" class="ne">Zpět</button>
+        <button id="tl-pin-ok" class="tlacitko-velke" style="padding:16px;font-size:1.1rem">Pokračovat</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="obrazovka-nastaveni" class="skryte">
+    <h1>⚙ Nastavení léčby</h1>
+    <div class="upozorneni oranzove">Měňte jen podle pokynů diabetologa.</div>
+    <div class="karta">
+      <div class="nastaveni-radek"><label>Sacharidový poměr – gramů na 1 jednotku</label><input id="n-pomer" type="text" inputmode="decimal"></div>
+      <div class="nastaveni-radek"><label>Citlivost – o kolik mmol/l sníží 1 jednotka</label><input id="n-citlivost" type="text" inputmode="decimal"></div>
+      <div class="nastaveni-radek"><label>Cílový cukr (mmol/l)</label><input id="n-cil" type="text" inputmode="decimal"></div>
+      <div class="nastaveni-radek"><label>Doba působení inzulinu (hodin)</label><input id="n-doba" type="text" inputmode="decimal"></div>
+      <div class="nastaveni-radek"><label>Název inzulinu</label><input id="n-nazev" type="text"></div>
+      <div class="nastaveni-radek"><label>Krok pera</label>
+        <select id="n-krok"><option value="0.5">0,5 jednotky</option><option value="1">1 jednotka</option></select></div>
+      <div class="nastaveni-radek"><label>Aktivní inzulin odečítat</label>
+        <select id="n-rezim-iob">
+          <option value="vse">od celé dávky (původní metoda mylife, opatrnější)</option>
+          <option value="korekce">jen od korekce (novější metoda mylife)</option>
+        </select></div>
+      <div class="nastaveni-radek"><label>Varování nízký cukr – pod (mmol/l)</label><input id="n-hypo" type="text" inputmode="decimal"></div>
+      <div class="nastaveni-radek"><label>Varování vysoký cukr – nad (mmol/l)</label><input id="n-vysoky" type="text" inputmode="decimal"></div>
+      <div class="nastaveni-radek"><label>Maximální dávka (jednotek)</label><input id="n-max" type="text" inputmode="decimal"></div>
+      <div class="nastaveni-radek"><label>Kód pro nastavení</label><input id="n-pin" type="text" inputmode="numeric"></div>
+      <div id="chyba-nastaveni" class="upozorneni cervene skryte"></div>
+      <div class="dve-tlacitka">
+        <button id="tl-nast-zpet" class="ne">Zrušit</button>
+        <button id="tl-nast-ulozit" class="tlacitko-velke tlacitko-zelene" style="padding:16px;font-size:1.1rem">Uložit</button>
+      </div>
+    </div>
+    <div class="karta" id="karta-sync">
+      <h2>Synchronizace</h2>
+      <p class="napoveda" id="nast-sync-text">Vypnuto.</p>
+      <button id="tl-sync-prihlasit" class="tlacitko-svetle">☁ Přihlásit</button>
+      <button id="tl-sync-odhlasit" class="tlacitko-svetle">Odhlásit toto zařízení</button>
+    </div>
+    <div class="karta" id="karta-slozka">
+      <h2>Deník ve složce</h2>
+      <p class="napoveda" id="nast-slozka-text">Složka není připojená.</p>
+      <button id="tl-vybrat-slozku" class="tlacitko-svetle">📁 Vybrat složku pro deník</button>
+    </div>
+    <div class="karta">
+      <h2>Záloha dat</h2>
+      <p class="napoveda">Stáhne nastavení a historii do souboru. Hodí se před výměnou telefonu.</p>
+      <button id="tl-export" class="tlacitko-svetle">⬇ Stáhnout zálohu</button>
+      <button id="tl-import" class="tlacitko-svetle">⬆ Nahrát zálohu</button>
+      <input id="soubor-import" type="file" accept=".json,application/json" class="skryte">
+      <div id="zprava-zaloha" class="upozorneni zelene skryte"></div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ==================================================================
+   VÝPOČET  (čistá logika bez obrazovky – dá se samostatně testovat)
+   ================================================================== */
+// --- VYPOCET-START ---
+var VYCHOZI_NASTAVENI = {
+  pomer: null,       // g sacharidů na 1 j.   (zadává se v Nastavení)
+  citlivost: null,   // mmol/l na 1 j.
+  cil: null,         // mmol/l
+  doba: null,        // hodin působení
+  nazev: "inzulinu",
+  krok: 0.5,         // krok pera
+  rezimIob: "vse",
+  hypo: 3.9,
+  vysoky: 15,
+  max: 20,
+  pin: "1234",
+  verzeNast: 2
+};
+
+// Kolik inzulinu z dávek ještě působí (lineární pokles za dobu působení).
+function aktivniInzulin(davky, ted, dobaHodin) {
+  var dobaMs = dobaHodin * 3600 * 1000;
+  var soucet = 0;
+  for (var i = 0; i < davky.length; i++) {
+    var uplynulo = ted - davky[i].cas;
+    if (uplynulo < 0) uplynulo = 0;
+    if (uplynulo < dobaMs) soucet += davky[i].jednotky * (1 - uplynulo / dobaMs);
+  }
+  return soucet;
+}
+
+function jeNastaveno(n) {
+  return n && n.pomer > 0 && n.citlivost > 0 && n.cil > 0 && n.doba > 0;
+}
+
+function zaokrouhlitDolu(hodnota, krok) {
+  return Math.floor(hodnota / krok + 1e-9) * krok;
+}
+
+// Hlavní výpočet. Vrací dávku a vše potřebné pro zobrazení.
+function spocitejDavku(vstup, n, davky, ted) {
+  var cukr = vstup.cukr;
+  var sach = vstup.sacharidy || 0;
+  var v = { upozorneni: [], davka: 0, nedavat: false };
+
+  v.jidlo = sach / n.pomer;
+  v.korekce = (cukr - n.cil) / n.citlivost;
+  v.aktivni = aktivniInzulin(davky, ted, n.doba);
+
+  if (cukr < n.hypo) {
+    v.nedavat = true;
+    v.upozorneni.push({ typ: "cervene", velke: "⚠ NÍZKÝ CUKR!",
+      text: "Inzulin teď NEDÁVEJTE. Snězte 15–20 g rychlého cukru (hroznový cukr, džus). Za 15 minut změřte znovu." });
+    return v;
+  }
+
+  var celkem;
+  if (n.rezimIob === "vse") {
+    v.odecteno = v.aktivni;
+    celkem = v.jidlo + v.korekce - v.aktivni;
+  } else {
+    v.odecteno = v.korekce > 0 ? Math.min(v.aktivni, v.korekce) : 0;
+    celkem = v.jidlo + v.korekce - v.odecteno;
+  }
+  v.presne = Math.max(0, celkem);
+  v.davka = zaokrouhlitDolu(v.presne, n.krok);
+
+  if (v.davka > n.max) {
+    v.upozorneni.push({ typ: "cervene", velke: "⚠ Neobvykle velká dávka",
+      text: "Vyšlo víc než " + cislo(n.max) + " jednotek. Zkontrolujte, že jste zadali správná čísla. Při pochybnostech volejte lékaře." });
+  }
+  if (cukr >= n.vysoky) {
+    v.upozorneni.push({ typ: "oranzove", velke: "Vysoký cukr",
+      text: "Postupujte podle pokynů lékaře pro vysoký cukr. Pokud je vysoký dlouho nebo je vám špatně, volejte lékaře." });
+  }
+  // poslední dávka před méně než hodinou
+  var posledni = null;
+  for (var i = 0; i < davky.length; i++) if (!posledni || davky[i].cas > posledni.cas) posledni = davky[i];
+  if (posledni && ted - posledni.cas < 3600 * 1000) {
+    var min = Math.round((ted - posledni.cas) / 60000);
+    v.upozorneni.push({ typ: "oranzove", velke: "Nedávno jste si píchl/a",
+      text: "Před " + min + " min jste si dal/a " + cislo(posledni.jednotky) + " j. Ta už je ve výpočtu odečtená. Opravdu chcete další dávku?" });
+  }
+  if (v.davka === 0 && !sach) {
+    v.upozorneni.push({ typ: "zelene", velke: "Inzulin není potřeba", text: "Cukr je v pořádku." });
+  }
+  return v;
+}
+
+// Převod textu na číslo (přijme čárku i tečku).
+function precistCislo(text) {
+  if (text === null || text === undefined) return NaN;
+  var t = String(text).trim().replace(/\s/g, "").replace(",", ".");
+  if (t === "") return NaN;
+  if (!/^\d+(\.\d+)?$/.test(t)) return NaN;
+  return parseFloat(t);
+}
+
+function cislo(x) {
+  if (x === null || x === undefined || isNaN(x)) return "";
+  var r = Math.round(x * 10) / 10;
+  return String(r).replace(".", ",");
+}
+// --- VYPOCET-KONEC ---
+
+/* ==================================================================
+   UKLÁDÁNÍ
+   ================================================================== */
+var KLIC_NAST = "bolus_nastaveni_v1";
+var KLIC_HIST = "bolus_historie_v1";
+var KLIC_LOG = "bolus_log_v1";
+var SOUBOR_JSON = "denik.json";
+var SOUBOR_CSV = "denik.csv";
+
+function noveId(predpona) { return predpona + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+function doplnNastaveni(ulozene) {
+  if (!ulozene) return Object.assign({}, VYCHOZI_NASTAVENI);
+  // verze 2: výchozí odečet aktivního inzulinu od celé dávky (jako mylife)
+  if (!ulozene.verzeNast || ulozene.verzeNast < 2) { ulozene.rezimIob = "vse"; ulozene.verzeNast = 2; }
+  return Object.assign({}, VYCHOZI_NASTAVENI, ulozene);
+}
+function doplnDavky(d) {
+  return (d || []).map(function (x) { if (!x.id) x.id = "d" + x.cas; return x; });
+}
+function nactiLokalne(klic, vychozi) {
+  try { var v = JSON.parse(localStorage.getItem(klic)); return v === null ? vychozi : v; } catch (e) { return vychozi; }
+}
+
+// Celý stav aplikace v paměti. Zrcadlí se do prohlížeče a (je-li připojena) do složky.
+var stav = {
+  nastaveni: doplnNastaveni(nactiLokalne(KLIC_NAST, null)),
+  davky: doplnDavky(nactiLokalne(KLIC_HIST, [])),
+  log: nactiLokalne(KLIC_LOG, [])
+};
+
+function nactiNastaveni() { return stav.nastaveni; }
+function nactiHistorii() { return stav.davky.slice(); }
+function ulozNastaveni(n) { stav.nastaveni = n; cloudZapsatNastaveni(n); ulozitVse(); }
+function ulozHistorii(h) { stav.davky = h; ulozitVse(); }
+
+var ZARIZENI = /Android|iPhone|iPad/i.test(navigator.userAgent) ? "telefon" : "PC";
+
+function zalogovat(typ, popis, data) {
+  var z = Object.assign({ id: noveId("u"), cas: Date.now(), typ: typ, popis: popis, zarizeni: ZARIZENI }, data || {});
+  stav.log.push(z);
+  cloudZapsat("log", z);
+  ulozitVse();
+}
+
+function ulozitVse() {
+  try {
+    localStorage.setItem(KLIC_NAST, JSON.stringify(stav.nastaveni));
+    localStorage.setItem(KLIC_HIST, JSON.stringify(stav.davky));
+    localStorage.setItem(KLIC_LOG, JSON.stringify(stav.log));
+  } catch (e) {}
+  zapisDoSlozky();
+}
+
+/* ---------- Data pro soubor ---------- */
+function dataDeniku() {
+  return { aplikace: "Inzulin-kalkulacka", verzeSouboru: 1, ulozeno: new Date().toISOString(),
+    nastaveni: stav.nastaveni, davky: stav.davky, log: stav.log };
+}
+
+function csvPole(x) {
+  if (x === null || x === undefined) return "";
+  var t = typeof x === "number" ? String(Math.round(x * 100) / 100).replace(".", ",") : String(x);
+  if (/[";\n]/.test(t)) t = '"' + t.replace(/"/g, '""') + '"';
+  return t;
+}
+function datumText(ms) {
+  var d = new Date(ms);
+  return d.getDate() + "." + (d.getMonth() + 1) + "." + d.getFullYear();
+}
+function casSekundy(ms) {
+  var d = new Date(ms);
+  return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + ":" + String(d.getSeconds()).padStart(2, "0");
+}
+var NAZVY_UDALOSTI = { vypocet: "Výpočet", davka: "Dávka zapsána", smazani: "Dávka smazána",
+  nastaveni: "Změna nastavení", slozka: "Složka připojena", import: "Nahrána záloha", prevod: "Převod dat",
+  prihlaseni: "Přihlášení" };
+
+function dataCsv() {
+  var radky = [["Datum", "Čas", "Událost", "Čas píchnutí", "Cukr (mmol/l)", "Sacharidy (g)",
+    "Doporučeno (j.)", "Píchnuto (j.)", "Aktivní inzulin (j.)", "Poznámka", "Zařízení"].join(";")];
+  stav.log.slice().sort(function (a, b) { return a.cas - b.cas; }).forEach(function (u) {
+    radky.push([datumText(u.cas), casSekundy(u.cas), NAZVY_UDALOSTI[u.typ] || u.typ,
+      u.casDavky ? casText(u.casDavky) + (datumText(u.casDavky) !== datumText(u.cas) ? " (" + datumText(u.casDavky) + ")" : "") : "",
+      u.cukr, u.sacharidy, u.doporuceno, u.jednotky, u.aktivni, u.popis, u.zarizeni].map(csvPole).join(";"));
+  });
+  return "﻿" + radky.join("\r\n") + "\r\n";
+}
+
+/* ---------- Složka na disku (Chrome / Edge) ---------- */
+var podporaSlozky = typeof window.showDirectoryPicker === "function";
+var slozka = null;          // připojená složka
+var ulozenaSlozka = null;   // zapamatovaná, ale zatím bez povolení
+var frontaZapisu = Promise.resolve();
+var chybaZapisu = false;
+
+function idb(akce, hodnota) {
+  return new Promise(function (ok, chyba) {
+    var r = indexedDB.open("inzulin-kalkulacka", 1);
+    r.onupgradeneeded = function () { r.result.createObjectStore("klice"); };
+    r.onerror = function () { chyba(r.error); };
+    r.onsuccess = function () {
+      var tx = r.result.transaction("klice", akce === "get" ? "readonly" : "readwrite");
+      var st = tx.objectStore("klice");
+      var q = akce === "get" ? st.get("slozka") : st.put(hodnota, "slozka");
+      q.onsuccess = function () { ok(q.result); };
+      q.onerror = function () { chyba(q.error); };
+    };
+  });
+}
+
+async function zapsatSoubor(nazev, obsah) {
+  var fh = await slozka.getFileHandle(nazev, { create: true });
+  var w = await fh.createWritable();
+  await w.write(obsah);
+  await w.close();
+}
+
+function zapisDoSlozky() {
+  if (!slozka) return frontaZapisu;
+  frontaZapisu = frontaZapisu.then(async function () {
+    try {
+      await zapsatSoubor(SOUBOR_JSON, JSON.stringify(dataDeniku(), null, 1));
+      await zapsatSoubor(SOUBOR_CSV, dataCsv());
+      chybaZapisu = false;
+    } catch (e) {
+      console.error("Zápis do složky selhal", e);
+      chybaZapisu = true;
+    }
+    ukazStavSlozky();
+  });
+  return frontaZapisu;
+}
+
+// Spojí data ze souboru a z prohlížeče (nic se neztratí; smazané dávky zůstanou smazané).
+function spojitData(zeSouboru) {
+  var logPodleId = {};
+  stav.log.concat(zeSouboru.log || []).forEach(function (u) { if (!u.id) u.id = "u" + u.cas + u.typ; logPodleId[u.id] = u; });
+  var log = Object.keys(logPodleId).map(function (k) { return logPodleId[k]; }).sort(function (a, b) { return a.cas - b.cas; });
+
+  var smazane = {};
+  log.forEach(function (u) { if (u.typ === "smazani" && u.idDavky) smazane[u.idDavky] = true; });
+  var davkyPodleId = {};
+  doplnDavky(stav.davky).concat(doplnDavky(zeSouboru.davky || zeSouboru.historie || [])).forEach(function (d) { davkyPodleId[d.id] = d; });
+  var davky = Object.keys(davkyPodleId).map(function (k) { return davkyPodleId[k]; })
+    .filter(function (d) { return !smazane[d.id] && !d.smazano; }).sort(function (a, b) { return a.cas - b.cas; });
+
+  var nSoubor = zeSouboru.nastaveni ? doplnNastaveni(zeSouboru.nastaveni) : null;
+  var n = stav.nastaveni;
+  if (nSoubor && (nSoubor.zmeneno || 0) >= (n.zmeneno || 0)) n = nSoubor;
+  return { nastaveni: n, davky: davky, log: log };
+}
+
+async function pripojitSlozku(h, novePripojeni) {
+  slozka = h;
+  var data = null;
+  try {
+    var fh = await h.getFileHandle(SOUBOR_JSON);
+    data = JSON.parse(await (await fh.getFile()).text());
+  } catch (e) {
+    if (e && e.name !== "NotFoundError") {
+      slozka = null;
+      alertSlozka("Soubor " + SOUBOR_JSON + " ve složce nejde přečíst. Nic jsem nepřepsal.");
+      return;
+    }
+  }
+  if (data) {
+    var spojeno = spojitData(data);
+    stav.nastaveni = spojeno.nastaveni; stav.davky = spojeno.davky; stav.log = spojeno.log;
+    nastaveni = stav.nastaveni;
+  }
+  try { await idb("put", h); } catch (e) {}
+  if (novePripojeni) zalogovat("slozka", "Připojena složka „" + h.name + "“" + (data ? " (deník načten)" : " (nový deník)"));
+  else ulozitVse();
+  prekresliHistorii();
+}
+
+function alertSlozka(text) {
+  var b = $("stav-slozky-pozor");
+  b.textContent = "⚠ " + text;
+  b.classList.remove("skryte");
+  $("stav-slozky-ok").classList.add("skryte");
+}
+
+function ukazStavSlozky() {
+  var ok = $("stav-slozky-ok"), poz = $("stav-slozky-pozor"), nt = $("nast-slozka-text");
+  if (!podporaSlozky) {
+    ok.classList.add("skryte");
+    poz.classList.add("skryte");
+    var ks = $("karta-slozka"); if (ks) ks.classList.add("skryte");
+    return;
+  }
+  if (slozka && !chybaZapisu) {
+    ok.textContent = "📁 Deník se ukládá do složky „" + slozka.name + "“";
+    ok.classList.remove("skryte"); poz.classList.add("skryte");
+    if (nt) nt.textContent = "Připojeno: složka „" + slozka.name + "“ (soubory " + SOUBOR_JSON + " a " + SOUBOR_CSV + ").";
+  } else if (slozka && chybaZapisu) {
+    ok.classList.add("skryte");
+    poz.textContent = "⚠ Deník se nepodařilo uložit. Klepněte sem a povolte přístup ke složce.";
+    poz.classList.remove("skryte");
+  } else if (ulozenaSlozka) {
+    ok.classList.add("skryte");
+    poz.textContent = "📁 Klepněte sem a povolte ukládání deníku do složky „" + ulozenaSlozka.name + "“";
+    poz.classList.remove("skryte");
+    if (nt) nt.textContent = "Čeká na povolení: složka „" + ulozenaSlozka.name + "“.";
+  } else {
+    ok.classList.add("skryte");
+    poz.textContent = "📁 Deník se zatím neukládá do složky. Klepněte sem a vyberte složku MyLife.";
+    poz.classList.remove("skryte");
+    if (nt) nt.textContent = "Složka není připojená.";
+  }
+}
+
+async function vybratSlozku() {
+  if (!podporaSlozky) return;
+  try {
+    var h = await window.showDirectoryPicker({ id: "mylife-denik", mode: "readwrite" });
+    ulozenaSlozka = null;
+    await pripojitSlozku(h, true);
+  } catch (e) { /* uživatel zrušil */ }
+  ukazStavSlozky();
+}
+
+async function klikNaStavSlozky() {
+  var h = slozka || ulozenaSlozka;
+  if (h && h.requestPermission) {
+    try {
+      var p = await h.requestPermission({ mode: "readwrite" });
+      if (p === "granted") { ulozenaSlozka = null; chybaZapisu = false; await pripojitSlozku(h, false); ukazStavSlozky(); return; }
+    } catch (e) {}
+  }
+  await vybratSlozku();
+}
+
+async function startSlozky() {
+  if (!podporaSlozky) { ukazStavSlozky(); return; }
+  try {
+    var h = await idb("get");
+    if (h) {
+      var p = h.queryPermission ? await h.queryPermission({ mode: "readwrite" }) : "prompt";
+      if (p === "granted") await pripojitSlozku(h, false);
+      else ulozenaSlozka = h;
+    }
+  } catch (e) {}
+  ukazStavSlozky();
+}
+
+/* ==================================================================
+   SYNCHRONIZACE (Firebase)
+   ================================================================== */
+var DNY_DAVKY = 14, DNY_LOG = 60;
+var cloud = { stav: "vypnuto", uid: null, email: null, db: null, auth: null,
+  davky: null, log: null, nast: undefined, cekajici: false, zCache: true, prvni: false, odhlaseni: [] };
+
+function cisteData(o) { return JSON.parse(JSON.stringify(o)); }
+
+function cloudZapsat(kolekce, data) {
+  if (!cloud.uid || !cloud.db) return;
+  FB.setDoc(FB.doc(cloud.db, "rodiny", cloud.uid, kolekce, data.id), cisteData(data)).catch(chybaCloudu);
+}
+function cloudZapsatNastaveni(n) {
+  if (!cloud.uid || !cloud.db || !jeNastaveno(n)) return;
+  var k = cisteData(n); if (!k.zmeneno) k.zmeneno = 1;
+  FB.setDoc(FB.doc(cloud.db, "rodiny", cloud.uid, "stav", "nastaveni"), k).catch(chybaCloudu);
+}
+
+function chybaCloudu(e) {
+  console.error("Synchronizace:", e);
+  cloud.stav = "chyba";
+  cloud.chyba = (e && (e.code || e.message)) || "neznámá chyba";
+  ukazSync();
+}
+
+function startCloud() {
+  if (!window.FIREBASE_CONFIG || !window.FB) { cloud.stav = "vypnuto"; ukazSync(); return; }
+  try {
+    var app = FB.initializeApp(window.FIREBASE_CONFIG);
+    cloud.auth = FB.getAuth(app);
+    try {
+      cloud.db = FB.initializeFirestore(app, { localCache: FB.persistentLocalCache({ tabManager: FB.persistentMultipleTabManager() }) });
+    } catch (e) {
+      cloud.db = FB.initializeFirestore(app, {});
+    }
+  } catch (e) { chybaCloudu(e); return; }
+  cloud.stav = "neprihlaseno";
+  FB.onAuthStateChanged(cloud.auth, function (user) {
+    if (user) {
+      if (cloud.uid !== user.uid) pripojitCloud(user);
+    } else {
+      odpojitCloud();
+      cloud.stav = "neprihlaseno";
+      ukazSync();
+      var bez = false; try { bez = localStorage.getItem("bolus_bez_sync") === "1"; } catch (e) {}
+      if (!bez) ukaz("obrazovka-prihlaseni");
+    }
+  });
+  ukazSync();
+}
+
+function odpojitCloud() {
+  cloud.odhlaseni.forEach(function (f) { try { f(); } catch (e) {} });
+  cloud.odhlaseni = [];
+  cloud.uid = null; cloud.email = null; cloud.davky = null; cloud.log = null; cloud.nast = undefined; cloud.prvni = false;
+}
+
+function pripojitCloud(user) {
+  odpojitCloud();
+  cloud.uid = user.uid; cloud.email = user.email; cloud.stav = "pripojovani";
+  ukazSync();
+  var ted = Date.now(), uid = user.uid, db = cloud.db;
+  var opt = { includeMetadataChanges: true };
+  function meta(snap) { cloud.cekajici = snap.metadata.hasPendingWrites; cloud.zCache = snap.metadata.fromCache; }
+  cloud.odhlaseni.push(FB.onSnapshot(
+    FB.query(FB.collection(db, "rodiny", uid, "davky"), FB.where("cas", ">=", ted - DNY_DAVKY * 864e5)), opt,
+    function (snap) { cloud.davky = snap.docs.map(function (d) { return d.data(); }); meta(snap); poCloudZmene(); }, chybaCloudu));
+  cloud.odhlaseni.push(FB.onSnapshot(
+    FB.query(FB.collection(db, "rodiny", uid, "log"), FB.where("cas", ">=", ted - DNY_LOG * 864e5)), opt,
+    function (snap) { cloud.log = snap.docs.map(function (d) { return d.data(); }); meta(snap); poCloudZmene(); }, chybaCloudu));
+  cloud.odhlaseni.push(FB.onSnapshot(FB.doc(db, "rodiny", uid, "stav", "nastaveni"), opt,
+    function (snap) { cloud.nast = snap.exists() ? snap.data() : null; meta(snap); poCloudZmene(); }, chybaCloudu));
+}
+
+function poCloudZmene() {
+  if (cloud.davky === null || cloud.log === null || cloud.nast === undefined) return;
+  if (!cloud.prvni) {
+    cloud.prvni = true;
+    // Co je jen v tomto zařízení (např. zapsané před přihlášením), nahrát do cloudu.
+    var ted = Date.now();
+    var maDavky = {}; cloud.davky.forEach(function (d) { maDavky[d.id] = true; });
+    var maLog = {}; cloud.log.forEach(function (u) { maLog[u.id] = true; });
+    stav.davky.forEach(function (d) { if (!maDavky[d.id] && d.cas >= ted - DNY_DAVKY * 864e5) cloudZapsat("davky", d); });
+    stav.log.forEach(function (u) { if (!maLog[u.id] && u.cas >= ted - DNY_LOG * 864e5) cloudZapsat("log", u); });
+    if (jeNastaveno(stav.nastaveni) && (!cloud.nast || (stav.nastaveni.zmeneno || 1) > (cloud.nast.zmeneno || 0))) {
+      cloudZapsatNastaveni(stav.nastaveni);
+    }
+    if (cloud.novePrihlaseni) {
+      cloud.novePrihlaseni = false;
+      zalogovat("prihlaseni", "přihlášeno k synchronizaci (" + (cloud.email || "") + ")");
+    }
+  }
+  var spojeno = spojitData({ nastaveni: cloud.nast, davky: cloud.davky, log: cloud.log });
+  stav.nastaveni = spojeno.nastaveni; stav.davky = spojeno.davky; stav.log = spojeno.log;
+  nastaveni = stav.nastaveni;
+  if (cloud.stav !== "chyba") cloud.stav = "pripojeno";
+  ulozitVse();
+  prekresliHistorii();
+  ukazSync();
+}
+
+function ukazSync() {
+  var el = $("stav-sync"); if (!el) return;
+  var t = $("nast-sync-text"), tp = $("tl-sync-prihlasit"), to = $("tl-sync-odhlasit"), ks = $("karta-sync");
+  el.className = "stav-sync";
+  if (cloud.stav === "vypnuto") {
+    el.classList.add("skryte"); if (ks) ks.classList.add("skryte"); return;
+  }
+  if (ks) ks.classList.remove("skryte");
+  if (cloud.stav === "neprihlaseno") {
+    el.classList.add("pozor"); el.textContent = "☁ Nepřihlášeno – dávky se nesdílejí. Klepněte pro přihlášení.";
+    t.textContent = "Toto zařízení není přihlášené."; tp.classList.remove("skryte"); to.classList.add("skryte");
+  } else if (cloud.stav === "chyba") {
+    el.classList.add("chyba"); el.textContent = "☁ Chyba synchronizace (" + cloud.chyba + ")";
+    t.textContent = "Chyba: " + cloud.chyba; tp.classList.add("skryte"); to.classList.remove("skryte");
+  } else if (cloud.stav === "pripojovani") {
+    el.classList.add("offline"); el.textContent = "☁ Připojuji…";
+    t.textContent = "Připojuji (" + (cloud.email || "") + ")…"; tp.classList.add("skryte"); to.classList.remove("skryte");
+  } else {
+    var online = navigator.onLine !== false;
+    if (online && !cloud.cekajici && !cloud.zCache) { el.classList.add("ok"); el.textContent = "☁ Synchronizováno"; }
+    else if (online && cloud.cekajici) { el.classList.add("offline"); el.textContent = "☁ Ukládám…"; }
+    else { el.classList.add("offline"); el.textContent = "☁ Bez internetu – vše se uloží, až bude připojení"; }
+    t.textContent = "Přihlášeno: " + (cloud.email || "") + ". Dávky a nastavení se sdílejí mezi zařízeními.";
+    tp.classList.add("skryte"); to.classList.remove("skryte");
+  }
+  el.classList.remove("skryte");
+}
+
+function textChybyPrihlaseni(e) {
+  var k = (e && e.code) || "";
+  if (k.indexOf("invalid-credential") >= 0 || k.indexOf("wrong-password") >= 0 || k.indexOf("user-not-found") >= 0)
+    return "Špatný e-mail nebo heslo.";
+  if (k.indexOf("invalid-email") >= 0) return "E-mail nemá správný tvar.";
+  if (k.indexOf("network") >= 0) return "Není internet. Přihlášení potřebuje připojení.";
+  if (k.indexOf("too-many-requests") >= 0) return "Příliš mnoho pokusů. Zkuste to za chvíli.";
+  return "Přihlášení se nepovedlo (" + (k || (e && e.message) || "neznámá chyba") + ").";
+}
+
+async function prihlasit() {
+  var email = $("login-email").value.trim(), heslo = $("login-heslo").value;
+  if (!email || !heslo) { zobrazChybu("chyba-login", "Vyplňte e-mail i heslo."); return; }
+  if (!cloud.auth) { zobrazChybu("chyba-login", "Synchronizace není v této verzi nastavená."); return; }
+  zobrazChybu("chyba-login", "");
+  $("tl-login").textContent = "Přihlašuji…";
+  try {
+    cloud.novePrihlaseni = true;
+    await FB.signInWithEmailAndPassword(cloud.auth, email, heslo);
+    try { localStorage.removeItem("bolus_bez_sync"); } catch (e) {}
+    $("login-heslo").value = "";
+    ukaz("obrazovka-vypocet");
+  } catch (e) {
+    zobrazChybu("chyba-login", textChybyPrihlaseni(e));
+  }
+  $("tl-login").textContent = "PŘIHLÁSIT";
+}
+
+/* ==================================================================
+   OBRAZOVKA
+   ================================================================== */
+var $ = function (id) { return document.getElementById(id); };
+var nastaveni = nactiNastaveni();
+if (!stav.log.length && stav.davky.length) {
+  stav.davky.forEach(function (d) {
+    stav.log.push({ id: "u" + d.id, cas: d.cas, typ: "davka", popis: "převedeno ze starší verze",
+      idDavky: d.id, casDavky: d.cas, jednotky: d.jednotky, cukr: d.cukr, sacharidy: d.sacharidy });
+  });
+}
+var posledniVypocet = null;
+
+function ukaz(idObrazovky) {
+  ["obrazovka-vypocet", "obrazovka-rucne", "obrazovka-pin", "obrazovka-nastaveni", "obrazovka-prihlaseni"].forEach(function (id) {
+    $(id).classList.toggle("skryte", id !== idObrazovky);
+  });
+  window.scrollTo(0, 0);
+}
+
+function casText(ms) {
+  var d = new Date(ms);
+  return d.getHours() + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+
+function jednotkySlovo(x) {
+  if (x === 1) return "jednotku";
+  if (x > 1 && x < 5 && Number.isInteger(x)) return "jednotky";
+  if (!Number.isInteger(x)) return "jednotky";
+  return "jednotek";
+}
+
+function prekresliHistorii() {
+  $("nenastaveno").classList.toggle("skryte", jeNastaveno(nastaveni));
+  var h = nactiHistorii();
+  var pulnoc = new Date(); pulnoc.setHours(0, 0, 0, 0);
+  var dnes = h.filter(function (x) { return x.cas >= pulnoc.getTime(); })
+              .sort(function (a, b) { return b.cas - a.cas; });
+  var el = $("historie-dnes");
+  if (!dnes.length) {
+    el.innerHTML = '<p class="napoveda">Dnes zatím žádná dávka.</p>';
+  } else {
+    el.innerHTML = dnes.map(function (x) {
+      var detail = [];
+      if (x.cukr) detail.push("cukr " + cislo(x.cukr));
+      if (x.sacharidy) detail.push(x.sacharidy + " g sach.");
+      if (x.rucne) detail.push("zapsáno ručně");
+      return '<div class="historie-polozka"><div><div class="cas">' + casText(x.cas) + '</div>' +
+        '<div class="detail">' + detail.join(" · ") + '</div>' +
+        '<button class="smazat" data-id="' + x.id + '">smazat</button></div>' +
+        '<div class="jednotky">' + cislo(x.jednotky) + ' j.</div></div>';
+    }).join("");
+  }
+  var akt = aktivniInzulin(h, Date.now(), nastaveni.doba);
+  var box = $("aktivni-inzulin");
+  if (akt >= 0.05) {
+    box.textContent = "Ještě působí: " + cislo(akt) + " j. inzulinu";
+    box.classList.remove("skryte");
+  } else {
+    box.classList.add("skryte");
+  }
+}
+
+// Z "HH:MM" udělá čas v ms. Pokud by čas vyšel v budoucnu, jde o včerejšek.
+function casZPolicka(text, ted) {
+  var m = /^(\d{1,2}):(\d{2})$/.exec(String(text || "").trim());
+  if (!m) return NaN;
+  var h = parseInt(m[1], 10), min = parseInt(m[2], 10);
+  if (h > 23 || min > 59) return NaN;
+  var d = new Date(ted); d.setHours(h, min, 0, 0);
+  var t = d.getTime();
+  if (t > ted + 60000) t -= 24 * 3600 * 1000;
+  return t;
+}
+function nastavCasPolicko(ms) {
+  var d = new Date(ms);
+  $("rucne-cas").value = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+
+function zobrazChybu(id, text) {
+  $(id).textContent = text;
+  $(id).classList.toggle("skryte", !text);
+}
+
+function spocitat() {
+  if (!jeNastaveno(nastaveni)) {
+    zobrazChybu("chyba-vstupu", "Aplikace ještě není nastavená. Otevřete ⚙ Nastavení dole.");
+    return;
+  }
+  var cukr = precistCislo($("cukr").value);
+  var sachText = $("sacharidy").value.trim();
+  var sach = sachText === "" ? 0 : precistCislo(sachText);
+
+  if (isNaN(cukr) || cukr < 1 || cukr > 35) {
+    zobrazChybu("chyba-vstupu", "Zadejte cukr ze senzoru, např. 7,5.");
+    $("karta-vysledek").classList.add("skryte");
+    return;
+  }
+  if (isNaN(sach) || sach < 0 || sach > 300) {
+    zobrazChybu("chyba-vstupu", "Sacharidy zadejte v gramech, např. 45. Nejíte-li, nechte prázdné.");
+    $("karta-vysledek").classList.add("skryte");
+    return;
+  }
+  zobrazChybu("chyba-vstupu", "");
+
+  var v = spocitejDavku({ cukr: cukr, sacharidy: sach }, nastaveni, nactiHistorii(), Date.now());
+  posledniVypocet = { vstup: { cukr: cukr, sacharidy: sach }, v: v };
+  zalogovat("vypocet",
+    (v.nedavat ? "NEDÁVAT – " : "") + v.upozorneni.map(function (u) { return u.velke.replace(/^[^A-Za-zÁ-ž]+/, ""); }).join(", ") +
+    (v.nedavat ? "" : (v.upozorneni.length ? " | " : "") + "jídlo " + cislo(v.jidlo) + " + korekce " + cislo(v.korekce) + " − aktivní " + cislo(v.odecteno || 0) + " = " + cislo(v.presne)),
+    { cukr: cukr, sacharidy: sach, doporuceno: v.nedavat ? 0 : v.davka, aktivni: Math.round(v.aktivni * 100) / 100,
+      rezim: nastaveni.rezimIob });
+
+  $("vysledek-upozorneni").innerHTML = v.upozorneni.map(function (u) {
+    return '<div class="upozorneni ' + u.typ + '"><span class="velke">' + u.velke + '</span>' + u.text + '</div>';
+  }).join("");
+
+  var ukazDavku = !v.nedavat;
+  $("vysledek-davka-blok").classList.toggle("skryte", !ukazDavku);
+  $("tl-zapsat").classList.toggle("skryte", !ukazDavku || v.davka === 0);
+  $("tl-jina-davka").classList.toggle("skryte", !ukazDavku);
+
+  if (ukazDavku) {
+    $("vysledek-davka").textContent = cislo(v.davka);
+    $("vysledek-jednotky-text").textContent = jednotkySlovo(v.davka) + " " + nastaveni.nazev;
+    $("vysledek-rozpis").innerHTML =
+      '<div><span>Na jídlo (' + sach + ' g ÷ ' + cislo(nastaveni.pomer) + ')</span><span>' + cislo(v.jidlo) + ' j.</span></div>' +
+      '<div><span>Korekce cukru (' + cislo(cukr) + ' → ' + cislo(nastaveni.cil) + ')</span><span>' + (v.korekce >= 0 ? "+" : "") + cislo(v.korekce) + ' j.</span></div>' +
+      '<div><span>Ještě působí z dřívějška (' + cislo(v.aktivni) + ' j.)</span><span>−' + cislo(v.odecteno) + ' j.</span></div>' +
+      '<div><span>Odečet aktivního inzulinu</span><span>' + (nastaveni.rezimIob === "vse" ? "od celé dávky" : "jen od korekce") + '</span></div>' +
+      '<div><span>Přesně vyšlo / zaokrouhleno dolů</span><span>' + cislo(v.presne) + ' → ' + cislo(v.davka) + ' j.</span></div>';
+  } else {
+    $("vysledek-rozpis").innerHTML = "";
+  }
+  $("karta-vysledek").classList.remove("skryte");
+  $("karta-potvrzeno").classList.add("skryte");
+  $("karta-vysledek").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function zapsatDavku(jednotky, casMs, cukr, sacharidy, rucne, zdroj, doporuceno) {
+  var d = { id: noveId("d"), cas: casMs, jednotky: jednotky, cukr: cukr || null, sacharidy: sacharidy || 0, rucne: !!rucne };
+  stav.davky.push(d);
+  cloudZapsat("davky", d);
+  zalogovat("davka", zdroj, { idDavky: d.id, casDavky: casMs, jednotky: jednotky, cukr: d.cukr,
+    sacharidy: d.sacharidy, doporuceno: doporuceno === undefined ? null : doporuceno });
+  prekresliHistorii();
+}
+
+function potvrdit(text) {
+  $("karta-vysledek").classList.add("skryte");
+  $("potvrzeno-text").textContent = text;
+  $("karta-potvrzeno").classList.remove("skryte");
+  ukaz("obrazovka-vypocet");
+  $("karta-potvrzeno").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function novyVypocet() {
+  $("cukr").value = "";
+  $("sacharidy").value = "";
+  $("karta-vysledek").classList.add("skryte");
+  $("karta-potvrzeno").classList.add("skryte");
+  posledniVypocet = null;
+  window.scrollTo(0, 0);
+}
+
+/* ---------- Nastavení ---------- */
+function vyplnNastaveni() {
+  $("n-pomer").value = cislo(nastaveni.pomer);
+  $("n-citlivost").value = cislo(nastaveni.citlivost);
+  $("n-cil").value = cislo(nastaveni.cil);
+  $("n-doba").value = cislo(nastaveni.doba);
+  $("n-nazev").value = nastaveni.nazev;
+  $("n-krok").value = String(nastaveni.krok);
+  $("n-rezim-iob").value = nastaveni.rezimIob;
+  $("n-hypo").value = cislo(nastaveni.hypo);
+  $("n-vysoky").value = cislo(nastaveni.vysoky);
+  $("n-max").value = cislo(nastaveni.max);
+  $("n-pin").value = nastaveni.pin;
+}
+
+function ulozitNastaveni() {
+  var nove = {
+    pomer: precistCislo($("n-pomer").value),
+    citlivost: precistCislo($("n-citlivost").value),
+    cil: precistCislo($("n-cil").value),
+    doba: precistCislo($("n-doba").value),
+    nazev: $("n-nazev").value.trim() || "inzulinu",
+    krok: parseFloat($("n-krok").value),
+    rezimIob: $("n-rezim-iob").value,
+    hypo: precistCislo($("n-hypo").value),
+    vysoky: precistCislo($("n-vysoky").value),
+    max: precistCislo($("n-max").value),
+    pin: $("n-pin").value.trim() || "1234",
+    verzeNast: 2,
+    zmeneno: Date.now()
+  };
+  var chyby = [];
+  if (!(nove.pomer >= 1 && nove.pomer <= 50)) chyby.push("sacharidový poměr (1–50 g)");
+  if (!(nove.citlivost >= 0.3 && nove.citlivost <= 10)) chyby.push("citlivost (0,3–10)");
+  if (!(nove.cil >= 4 && nove.cil <= 10)) chyby.push("cílový cukr (4–10)");
+  if (!(nove.doba >= 2 && nove.doba <= 8)) chyby.push("doba působení (2–8 h)");
+  if (!(nove.hypo >= 3 && nove.hypo <= 5.5)) chyby.push("hranice nízkého cukru (3–5,5)");
+  if (!(nove.vysoky >= 10 && nove.vysoky <= 30)) chyby.push("hranice vysokého cukru (10–30)");
+  if (!(nove.max >= 1 && nove.max <= 50)) chyby.push("maximální dávka (1–50)");
+  if (chyby.length) { zobrazChybu("chyba-nastaveni", "Zkontrolujte: " + chyby.join(", ") + "."); return; }
+  zobrazChybu("chyba-nastaveni", "");
+  var popisky = { pomer: "poměr g/j", citlivost: "citlivost", cil: "cíl", doba: "doba působení", nazev: "inzulin",
+    krok: "krok pera", rezimIob: "odečet aktivního", hypo: "hranice nízkého", vysoky: "hranice vysokého", max: "max. dávka", pin: "kód" };
+  var zmeny = Object.keys(popisky).filter(function (k) { return String(nastaveni[k]) !== String(nove[k]); })
+    .map(function (k) { return k === "pin" ? "kód změněn" : popisky[k] + " " + (nastaveni[k] === null || nastaveni[k] === undefined ? "–" : nastaveni[k]) + " → " + nove[k]; });
+  nastaveni = nove;
+  stav.nastaveni = nove;
+  cloudZapsatNastaveni(nove);
+  if (zmeny.length) zalogovat("nastaveni", zmeny.join(", ")); else ulozitVse();
+  prekresliHistorii();
+  ukaz("obrazovka-vypocet");
+}
+
+function exportovat() {
+  var data = dataDeniku();
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "inzulin-zaloha-" + new Date().toISOString().slice(0, 10) + ".json";
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function importovat(soubor) {
+  var r = new FileReader();
+  r.onload = function () {
+    try {
+      var data = JSON.parse(r.result);
+      if (!data.nastaveni || !(Array.isArray(data.historie) || Array.isArray(data.davky))) throw new Error();
+      var spojeno = spojitData(data);
+      stav.nastaveni = spojeno.nastaveni; stav.davky = spojeno.davky; stav.log = spojeno.log;
+      nastaveni = stav.nastaveni;
+      if (cloud.uid) {
+        stav.davky.forEach(function (d) { cloudZapsat("davky", d); });
+        stav.log.forEach(function (u) { cloudZapsat("log", u); });
+        cloudZapsatNastaveni(stav.nastaveni);
+      }
+      zalogovat("import", "nahrána záloha " + soubor.name);
+      vyplnNastaveni();
+      prekresliHistorii();
+      $("zprava-zaloha").textContent = "Záloha nahrána.";
+      $("zprava-zaloha").classList.remove("skryte");
+    } catch (e) {
+      $("zprava-zaloha").textContent = "Tento soubor není záloha z této aplikace.";
+      $("zprava-zaloha").classList.remove("skryte");
+    }
+  };
+  r.readAsText(soubor);
+}
+
+/* ---------- Tlačítka ---------- */
+$("tl-spocitat").addEventListener("click", spocitat);
+["cukr", "sacharidy"].forEach(function (id) {
+  $(id).addEventListener("keydown", function (e) { if (e.key === "Enter") spocitat(); });
+});
+
+$("tl-zapsat").addEventListener("click", function () {
+  if (!posledniVypocet) return;
+  var p = posledniVypocet;
+  zapsatDavku(p.v.davka, Date.now(), p.vstup.cukr, p.vstup.sacharidy, false, "podle výpočtu", p.v.davka);
+  potvrdit(cislo(p.v.davka) + " " + jednotkySlovo(p.v.davka) + " v " + casText(Date.now()) + ".");
+  $("cukr").value = ""; $("sacharidy").value = "";
+});
+
+var rucneZVypoctu = false;
+$("tl-jina-davka").addEventListener("click", function () {
+  rucneZVypoctu = true;
+  $("rucne-jednotky").value = "";
+  nastavCasPolicko(Date.now());
+  zobrazChybu("chyba-rucne", "");
+  ukaz("obrazovka-rucne");
+});
+$("tl-rucne").addEventListener("click", function () {
+  rucneZVypoctu = false;
+  $("rucne-jednotky").value = "";
+  nastavCasPolicko(Date.now());
+  zobrazChybu("chyba-rucne", "");
+  ukaz("obrazovka-rucne");
+});
+document.querySelectorAll("[data-posun]").forEach(function (b) {
+  b.addEventListener("click", function () {
+    var posun = parseInt(b.getAttribute("data-posun"), 10);
+    var zaklad = posun === 0 ? Date.now() : casZPolicka($("rucne-cas").value, Date.now());
+    if (isNaN(zaklad)) zaklad = Date.now();
+    nastavCasPolicko(zaklad + posun * 60000);
+  });
+});
+$("tl-rucne-zpet").addEventListener("click", function () { ukaz("obrazovka-vypocet"); });
+$("tl-rucne-ulozit").addEventListener("click", function () {
+  var j = precistCislo($("rucne-jednotky").value);
+  if (isNaN(j) || j <= 0 || j > 50) { zobrazChybu("chyba-rucne", "Zadejte počet jednotek, např. 4."); return; }
+  var ted = Date.now();
+  var cas = casZPolicka($("rucne-cas").value, ted);
+  if (isNaN(cas)) { zobrazChybu("chyba-rucne", "Zadejte čas, např. 16:19."); return; }
+  if (ted - cas > 12 * 3600 * 1000) { zobrazChybu("chyba-rucne", "Čas je víc než 12 hodin zpátky. Zkontrolujte ho."); return; }
+  var cukr = null, sach = 0;
+  if (rucneZVypoctu && posledniVypocet) { cukr = posledniVypocet.vstup.cukr; sach = posledniVypocet.vstup.sacharidy; }
+  zapsatDavku(j, cas, cukr, sach, !rucneZVypoctu,
+    rucneZVypoctu ? "jiné množství než výpočet" : "zapsáno ručně",
+    rucneZVypoctu && posledniVypocet ? posledniVypocet.v.davka : undefined);
+  $("cukr").value = ""; $("sacharidy").value = "";
+  potvrdit(cislo(j) + " " + jednotkySlovo(j) + " v " + casText(cas) + ".");
+});
+
+$("tl-novy").addEventListener("click", novyVypocet);
+
+$("historie-dnes").addEventListener("click", function (e) {
+  var id = e.target.getAttribute && e.target.getAttribute("data-id");
+  if (!id) return;
+  var btn = e.target;
+  if (btn.dataset.potvrd !== "1") { btn.dataset.potvrd = "1"; btn.textContent = "opravdu smazat?"; return; }
+  var d = stav.davky.filter(function (x) { return x.id === id; })[0];
+  stav.davky = stav.davky.filter(function (x) { return x.id !== id; });
+  if (d) cloudZapsat("davky", Object.assign({}, d, { smazano: true }));
+  if (d) zalogovat("smazani", "smazáno z dnešních dávek", { idDavky: id, casDavky: d.cas, jednotky: d.jednotky, cukr: d.cukr, sacharidy: d.sacharidy });
+  else ulozitVse();
+  prekresliHistorii();
+});
+
+$("tl-nastaveni").addEventListener("click", function () {
+  $("pin").value = ""; zobrazChybu("chyba-pin", ""); ukaz("obrazovka-pin");
+});
+$("tl-pin-zpet").addEventListener("click", function () { ukaz("obrazovka-vypocet"); });
+$("tl-pin-ok").addEventListener("click", function () {
+  if ($("pin").value.trim() === String(nastaveni.pin)) { vyplnNastaveni(); zobrazChybu("chyba-nastaveni", ""); ukaz("obrazovka-nastaveni"); }
+  else zobrazChybu("chyba-pin", "Špatný kód.");
+});
+$("tl-nast-zpet").addEventListener("click", function () { ukaz("obrazovka-vypocet"); });
+$("tl-nast-ulozit").addEventListener("click", ulozitNastaveni);
+$("tl-export").addEventListener("click", exportovat);
+$("tl-import").addEventListener("click", function () { $("soubor-import").click(); });
+$("soubor-import").addEventListener("change", function (e) { if (e.target.files[0]) importovat(e.target.files[0]); });
+
+$("stav-slozky-pozor").addEventListener("click", klikNaStavSlozky);
+$("tl-vybrat-slozku").addEventListener("click", vybratSlozku);
+
+prekresliHistorii();
+setInterval(prekresliHistorii, 60000);
+startSlozky();
+
+$("tl-login").addEventListener("click", prihlasit);
+$("login-heslo").addEventListener("keydown", function (e) { if (e.key === "Enter") prihlasit(); });
+$("tl-bez-sync").addEventListener("click", function () {
+  try { localStorage.setItem("bolus_bez_sync", "1"); } catch (e) {}
+  ukaz("obrazovka-vypocet");
+});
+$("stav-sync").addEventListener("click", function () {
+  if (cloud.stav === "neprihlaseno") { zobrazChybu("chyba-login", ""); ukaz("obrazovka-prihlaseni"); }
+});
+$("tl-sync-prihlasit").addEventListener("click", function () { zobrazChybu("chyba-login", ""); ukaz("obrazovka-prihlaseni"); });
+$("tl-sync-odhlasit").addEventListener("click", function () {
+  var b = $("tl-sync-odhlasit");
+  if (b.dataset.potvrd !== "1") { b.dataset.potvrd = "1"; b.textContent = "Opravdu odhlásit? Klepněte znovu."; return; }
+  b.dataset.potvrd = ""; b.textContent = "Odhlásit toto zařízení";
+  if (cloud.auth) FB.signOut(cloud.auth);
+});
+window.addEventListener("online", ukazSync);
+window.addEventListener("offline", ukazSync);
+startCloud();
+
+if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) {
+  navigator.serviceWorker.register("sw.js").catch(function (e) { console.warn("Service worker:", e); });
+}
+</script>
+</body>
+</html>
