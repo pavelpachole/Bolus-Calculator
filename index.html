@@ -146,7 +146,7 @@
     <div class="paticka">
       <button id="tl-nastaveni" class="odkaz">⚙ Nastavení (pro rodinu)</button>
     </div>
-    <p class="info-maly"><b>Verze 5</b> · Pomocná kalkulačka, není to zdravotnický prostředek.<br>Při pochybnostech se řiďte pokyny lékaře.</p>
+    <p class="info-maly"><b>Verze 5.1</b> · Pomocná kalkulačka, není to zdravotnický prostředek.<br>Při pochybnostech se řiďte pokyny lékaře.</p>
   </section>
 
   <!-- ============ RUČNÍ ZÁPIS / JINÁ DÁVKA ============ -->
@@ -450,7 +450,9 @@ function dataCsv() {
 }
 
 /* ---------- Složka na disku (Chrome / Edge) ---------- */
-var podporaSlozky = typeof window.showDirectoryPicker === "function";
+// Deník do složky jen na počítači; telefon se spoléhá na synchronizaci.
+var podporaSlozky = typeof window.showDirectoryPicker === "function" &&
+  !/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
 var slozka = null;          // připojená složka
 var ulozenaSlozka = null;   // zapamatovaná, ale zatím bez povolení
 var frontaZapisu = Promise.resolve();

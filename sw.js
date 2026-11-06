@@ -1,5 +1,5 @@
 // Service worker: aplikace se otevře i bez internetu.
-var VERZE = "inzulin-v5";
+var VERZE = "inzulin-v5-1";
 var SOUBORY = ["./", "./index.html", "./manifest.webmanifest", "./firebase-bundle.js",
   "./firebase-config.js", "./ikona-192.png", "./ikona-512.png"];
 
